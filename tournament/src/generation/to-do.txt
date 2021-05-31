@@ -1,0 +1,31 @@
+What I need to do:
+1. Generate all the sets
+2. Calculate the game numbers of those sets
+3. Position the games correctly
+4. Calculate the seeds and placeholders of all games (might need to do this before the positions)
+5. Make API to edit the games and tournament
+6. Devise method to make 3rd/4th place game, 5th/6th/7th/8th place game, etc.
+7. Do everything else in the checklist (including triple elimination)
+
+3 distinct patterns:
+2^(e-2) + 2^(e-1) < p <= 2^e:               From 25 - 32 (stable losers)
+2^(e-3) + 2^(e-1) < p <= 2^(e-2) + 2^(e-1): From 21 - 24 (semi-stable losers)
+2^(e-1) < p <= 2^(e-3) + 2^(e-1):           From 17 - 20 (unstable losers)
+
+Unstable tier:
+first round (and hence second round) losers games have two game number patterns, both go from biggest to smallest, and interweave with each other,
+based off the game number of the loser in the top spot in the set, Example:
+120 L107
+
+119 L106
+60  L50
+
+118 L104
+59  L49
+
+
+Unstable tier is divided into 2 as well (top half is stable, bottom half is unstable)
+Top half: second interweaved game numbers are for the sets at visual full positions of double the non-byes
+
+
+EVERYTHING IS ORDERED BY THE FIRST BRACKET SECOND ROUND, BYES ARE WHAT CAUSE THE "INTERWEAVE"

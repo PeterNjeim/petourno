@@ -1,0 +1,80 @@
+digraph G {
+    subgraph cluster_0 {
+    style=filled;
+    color="#bbdefb";
+    node [style=filled,color="#2196f3",fontcolor=white];
+    1 [ label = 1 ]
+    2 [ label = 2 ]
+    3 [ label = 3 ]
+    5 [ label = 4 ]
+    7 [ label = 5 ]
+    40 [ label = 7 ]
+    41 [ label = 8 ]
+    42 [ label = 9 ]
+    43 [ label = 10 ]
+    68 [ label = 17 ]
+    69 [ label = 18 ]
+    82 [ label = 22 ]
+
+    1 -> 40 [ ]
+    2 -> 41 [ ]
+    3 -> 41 [ ]
+    5 -> 42 [ ]
+    7 -> 43 [ ]
+    40 -> 68 [ ]
+    41 -> 68 [ ]
+    42 -> 69 [ ]
+    43 -> 69 [ ]
+    68 -> 82 [ ]
+    69 -> 82 [ ]
+
+    label = "Winners Bracket";
+  }
+
+  subgraph cluster_1 {
+    style=filled;
+    color="#ffcdd2";
+    node [ style = filled, color = "#f44336", fontcolor = white ];
+    31 [ label = 6 ]
+    54 [ label = 14 ]
+    55 [ label = 13 ]
+    58 [ label = 12 ]
+    59 [ label = 11 ]
+    65 [ label = 16 ]
+    67 [ label = 15 ]
+    72 [ label = 19 ]
+    73 [ label = 20 ]
+    79 [ label = 21 ]
+    83 [ label = 23 ]
+
+    31 -> 55 [ ]
+    54 -> 65 [ ]
+    55 -> 65 [ ]
+    58 -> 67 [ ]
+    59 -> 67 [ ]
+    65 -> 72 [ ]
+    67 -> 73 [ ]
+    72 -> 79 [ ]
+    73 -> 79 [ ]
+    79 -> 83 [ ]
+
+    2 -> 31 [ arrowhead = empty, style = dashed ]
+    3 -> 31 [ arrowhead = empty, style = dashed ]
+    43 -> 54 [ arrowhead = empty, style = dashed ]
+    1 -> 54 [ arrowhead = empty, style = dashed ]
+    42 -> 55 [ arrowhead = empty, style = dashed ]
+    41 -> 58 [ arrowhead = empty, style = dashed ]
+    5 -> 58 [ arrowhead = empty, style = dashed ]
+    40 -> 59 [ arrowhead = empty, style = dashed ]
+    7 -> 59 [ arrowhead = empty, style = dashed ]
+    68 -> 72 [ arrowhead = empty, style = dashed ]
+    69 -> 73 [ arrowhead = empty, style = dashed ]
+    82 -> 83 [ arrowhead = empty, style = dashed ]
+
+    label = "Losers Bracket";
+  }
+
+    87 [ label = 24, shape = Mdiamond, style = filled, color = "#673ab7", fontcolor = white ]
+    82 -> 87 [ ]
+    83 -> 87 [ ]
+}
