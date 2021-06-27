@@ -1,5 +1,6 @@
 pub mod double_elim;
 pub mod single_elim;
+pub mod single_elim_copy;
 
 pub enum Result {
     Sets(Vec<String>),

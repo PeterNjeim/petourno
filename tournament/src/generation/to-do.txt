@@ -1,31 +1,89 @@
 What I need to do:
-1. Generate all the sets
-2. Calculate the game numbers of those sets
-3. Position the games correctly
-4. Calculate the seeds and placeholders of all games (might need to do this before the positions)
-5. Make API to edit the games and tournament
-6. Devise method to make 3rd/4th place game, 5th/6th/7th/8th place game, etc.
-7. Do everything else in the checklist (including triple elimination)
+A. Find formula to generate losers bracket of any tournament based on rounds and sets in those rounds
+B. Find formula to generate winners bracket of any tournament based on rounds and sets in those rounds
+1. Do everything else in the checklist (including triple elimination)
+2. Devise method to make 3rd/4th place game, 5th/6th/7th/8th place game, etc.
+3. Make API to edit the games and tournament
 
-3 distinct patterns:
-2^(e-2) + 2^(e-1) < p <= 2^e:               From 25 - 32 (stable losers)
-2^(e-3) + 2^(e-1) < p <= 2^(e-2) + 2^(e-1): From 21 - 24 (semi-stable losers)
-2^(e-1) < p <= 2^(e-3) + 2^(e-1):           From 17 - 20 (unstable losers)
+Conjecture:
+If the next round has all sets with at least one bye, then there is only one corresponding losers round.
+If the next round has at least one set without any byes, then there are two corresponding losers rounds.
+The losers in your round are placed in the round directly before their first corresponding losers round (except if double byes exist (two byes in one set), in which case all sets in your round that correspond to an empty set in the previous round (correspondence could be criss-crossed and/or/nor reverse ordered, etc.) will have their losers placed in their first corresponding losers round.
 
-Unstable tier:
-first round (and hence second round) losers games have two game number patterns, both go from biggest to smallest, and interweave with each other,
-based off the game number of the loser in the top spot in the set, Example:
-120 L107
+If the next round has an equal or greater number of sets, then there is only one corresponding losers round.
+If the next round has a smaller number of sets, then are two corresponding losers rounds.
 
-119 L106
-60  L50
+Final:
+Generate full brackets, all 0's move forward
 
-118 L104
-59  L49
+1. Find all games in first bracket first round with 0's. If there is only one 0, move the non-zero to the winner child, and the zero to the loser child. If there are two 0's, move one zero to the winner child and one zero to the loser child.
+2. Delete each game with at least one 0. Count how many games have been deleted, then at the end, delete that number from all game numbers.
+3. Reorder each round of each bracket, doing all the winners bracket first, all the first losers bracket second, etc. Use set scan + criss cross or reverse.
+
+Remove placeholders and only rely on edges for UI.
+Don't calculate game numbers until after games are removed.
+Find out losers losers bracket positions etc.
+Find out criss crossing algorithms for other brackets
+
+Look up "true cross" bracketology
 
 
-Unstable tier is divided into 2 as well (top half is stable, bottom half is unstable)
-Top half: second interweaved game numbers are for the sets at visual full positions of double the non-byes
+To generate position, just create follow the edges backwards from the last round of each bracket, following the parent winner edges
+Generate game numbers using criss cross and set scans
+Generate placeholders via the edges as well
 
+Edges (useful)
+Bracket (technically useful, might be useless)
+Round (technically useful, might be useless)
+Position (useless) (can be generated via edges)
+Game Number (useless) (can be generated via earlier game numbers and edges/positions) (slightly ambiguous)
+Placeholders (useless) (same as edges)
 
-EVERYTHING IS ORDERED BY THE FIRST BRACKET SECOND ROUND, BYES ARE WHAT CAUSE THE "INTERWEAVE"
+Game Plan:
+Generate one round in winners, then two rounds in losers, fill in the non-existant seeds with 0, if at least one seed is 0, the game will also be 0, if a W0 or L0 exists, replace those with 0 as well, and whatever got 0 from this process will also have a game 0
+
+Delete game 0's, then reorder, then delete game 0's again
+
+Final Game Plan:
+1. Generate bracket for nearest power of 2 that is equal or greater than player count
+ z. Add 1 to the game number for every set generated in order
+ a. Generate first round of winners bracket, replacing non-existent seeds with 0 and games with 0 as game 0
+ b. Generate first round (sometimes this round will be deleted) of every losers bracket, will have the same number of sets as the winners bracket, and have all the first round upper bracket's games' losers in order, two per set (L0-L0, L1-L2, L0-L0, L3-L4, etc. or L0-L0, L0-L9, L0-L0, L0-L10, etc. for dummy rounds that will be deleted). Positions and accurate game numbers will be generated later, and placeholders will be determined after that.
+ c. Generate the rest of the rounds, starting with the second round of the winners bracket
+  i.   Generate the next round of the winners bracket
+  ii.  Generate two losers bracket rounds, the first round with sets with one loser (from the current round, with potential custom ordering) in the top position, and one winner in the bottom position, and the second round with winners from the previous round in both positions
+     1. After generating each round, check if the next round has a bye or loser in at least one position in every set, if it does not, then generate two rounds in the bracket below, the first filled with losers in the top position of your current round (the one that has just been generated) and winners in the bottom position of the previous round, and the second solely with winners of the first round, and repeat step c. ii. a. for each tuple. If the next round does have at least one loser or bye in every set, then generate only one round with losers in the top position of your current round, and winners of the previous round in the bottom position.
+      a. How to check the next round since it doesn't exist yet
+        i.   In the winner's bracket, all future rounds have no byes or losers.
+        ii.  In the first losers bracket, all rounds alternate between all losers, and not all losers
+        iii. For remaining brackets, you will always have an all-losers-round next, unless you yourself were derived from a round that had a non-all-losers round after it, in which case you will have a non-all-losers round next, but the non-all-losers-round is guaranteed to have an all-losers-round next.
+d. Generate the finals games
+  i. Generate the last game of the highest unfinished bracket
+  ii.  Each time you reach the last game of a bracket, generate one losers game in each bracket corrseponding to their upper bracket's latest game (10 W3-W4, 11 L10-W8, 12 L11-W9, etc.).
+  iii. Winner of the last game of winners and last game of first losers brackets meet in a new set in bracket 1.5 (will be rounded to 2). Position will be 1 and will always be the exact same for every if nec. game to make a horizontal line for the if nec. games, and higher than the previous losers games. Add one to the game number for every finals and if nec. game, in order of brackets from top to bottom.
+    1. The number of if nec. games is equal to the current bracket number - 1, (1 if nec. game for first losers bracket).
+  iv.  After generating a finals set with if nec. games, generate one game in each bracket with the loser of the finals and if nec. games going against the winner of the previous game in that lower bracket (14 W10-W11, 15 (if nec.) W14-L14, 16 L14/L15-W12, 17 L16-W13, etc.). (Same as step i.)
+  v.   (Same as step ii.) Take the winner of the last game of the upper bracket (the last if nec. game) and the winner of the last game in the current bracket (that you just generated), and make a set from those two winners, with current bracket number - 1 if nec. games (so 2 for the second losers bracket) (16 W14/W15-W16, 17 (if nec.) W16-L16, 18 (if nec.) W17-L17).
+e. Delete superfluous games
+  i.   Propogate 0's throughout the tournament's edges, until no more 0's can move. If there is only one 0 in a set, move the non-0 through the winners edge and move the 0 through the loser's edge. If there are two 0's, move a 0 both through the winner's and loser's edges.
+  ii.  Mark all sets with at least one 0 as game number 0. Every time you change a game number to game number 0, subtract 1 from all other larger game numbers.
+  iii. Delete all sets with game number 0.
+  iv.  Subtract 1 from all larger rounds in the same bracket if a round has no more sets in it.
+f. Generate proper game numbers by set scanning in the same order the rounds were generated in. One way would be to find the next game number of a different bracket or round, or the next node index of a different bracket or round. Another way would be to follow the same for loops as the generation process. This step must be done after 0's and game 0's have been propagated, but before sets have been deleted.
+g. Determine criss-cross formulae for 3+ losers brackets. Must criss-cross during generation of rounds, so that the edges are correctly linked.
+h. Fix placeholders by following the edges and propogating game numbers for winners and losers.
+i. Calculate positioning of sets
+  i.   Start at 1, then multiply by 2 for every winners edge until the last game in that bracket excluding finals. Every winners edge with position 1 will subtract 2^(starting round of edge - 1) from the final number.
+  ii.  Generate new positioning system so that brackets are concise and aesthetically pleasing.
+j. ???
+k. Profit.
+
+If the next round does not have a byes or loser in at least one position in every set, generate two losers bracket rounds, the first round with sets with one loser (from the current round, with potential custom ordering) in the top position, and one winner in the bottom position, and the second round with winners from the previous round in both positions
+If the next round has a bye or loser in every set, generate one losers bracket round, having one loser (from the current round, with potential custom ordering) in the top position, and one winner in the bottom position
+
+Calculating position of sets in losers brackets:
+1. Start at 1, then multiply by 2 for every winners edge until the last game in that bracket excluding finals. Every winners edge with position 1 will subtract 2^(starting round of edge - 1) from the final number.
+
+Last bracket games of bracket have same position (3rd bracket has last 3 games as position 1 both internally and visually (CSS))
+
+Set scan BEFORE deleting games but AFTER setings games to 0.
