@@ -1,7 +1,7 @@
 use material_yew::text_inputs::TextFieldType;
 use material_yew::*;
 use petgraph::stable_graph::StableGraph;
-use tournament::generation::single_elim::{self, *};
+use tournament::generation::elimination::{self, *};
 use yew::html;
 use yew::prelude::*;
 
@@ -36,13 +36,7 @@ impl Component for Tournament {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::TournamentSubmit => {
-                self.value = single_elim::new_elim(
-                    self.players
-                        .lines()
-                        .map(|p| p.to_owned())
-                        .collect::<Vec<String>>(),
-                    self.tuple.parse::<u64>().unwrap(),
-                );
+                self.value = elimination::new_elim(self.players.lines().map(|p| p.to_owned()).collect::<Vec<String>>(), self.tuple.parse::<u64>().unwrap());
                 // the value has changed so we need to
                 // re-render for it to appear on the page
                 true
@@ -78,9 +72,24 @@ impl Component for Tournament {
                         <MatButton label="Generate" />
                     </span>
                 </div>
+                // <div style="display: grid; border-bottom: 2px black solid;">
+                // {for (1..=self.value.clone().node_weights_mut().last().unwrap_or(&mut GraphSet{bracket: 1, round: 1, game: 1, position: 1, placeholders: ("0".to_owned(), "0".to_owned())}).game).map(|game| html! {
+                //     <div style="display: inline-flex; border: 1px solid #d3d3d3; margin: 4px; max-width: 400px; margin-bottom: 8px;">
+                //     <div style="align-self: center;">
+                //     <MatList>
+                //     <MatListItem>{ format!("{}", game)}</MatListItem>
+                //     </MatList>
+                //     </div>
+                //     <div style="width: 100%; align-self: center; border-left: 1px solid #d3d3d3;">
+                //     <MatList>
+                //     <MatListItem>{ format!("{}", self.value.clone().node_weights_mut().find(|set| set.game == game).unwrap_or(&mut GraphSet{bracket: 1, round: 1, game: 1, position: 1, placeholders: ("0".to_owned(), "0".to_owned())}).placeholders.0) }</MatListItem>
+                //     <MatListItem>{ format!("{}", self.value.clone().node_weights_mut().find(|set| set.game == game).unwrap_or(&mut GraphSet{bracket: 1, round: 1, game: 1, position: 1, placeholders: ("0".to_owned(), "0".to_owned())}).placeholders.1) }</MatListItem></MatList></div></div>
+                // })}
+                // </div>
                 {for (1..=self.tuple.parse().unwrap_or(1)).map(|bracket| html! {
                 <div style="display: grid; border-bottom: 2px black solid;">
-                    {for self.value.clone().node_weights_mut().filter(|set| set.bracket == bracket).map(|set| html! {<div style=format!("grid-area: {0} / {2} / {1} / {3}; display: inline-flex; border: 1px solid #d3d3d3; margin: 4px; max-width: 400px; margin-bottom: 8px;", (set.position - 1) * (1 << set.round) + (1 << (set.round - 1)), (set.position - 1) * (1 << set.round) + (1 << (set.round - 1)) + 2, set.round, set.round + 1)>
+                    {for self.value.clone().node_weights_mut().filter(|set| set.bracket == bracket).map(|set| html! {<div style=format!("grid-area: {0} / {2} / {1} / {3}; display: inline-flex; border: 1px solid #d3d3d3; margin: 4px; max-width: 400px; margin-bottom: 8px;", set.position, set.position + 2, set.round, set.round + 1)>
+                    // "grid-area: {0} / {2} / {1} / {3}; display: inline-flex; border: 1px solid #d3d3d3; margin: 4px; max-width: 400px; margin-bottom: 8px;", (set.position - 1) * (1 << set.round) + (1 << (set.round - 1)), (set.position - 1) * (1 << set.round) + (1 << (set.round - 1)) + 2, set.round, set.round + 1
                     <div style="align-self: center;">
                     <MatList>
                     <MatListItem>{ format!("{}", set.game)}</MatListItem>

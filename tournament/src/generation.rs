@@ -1,4 +1,6 @@
 pub mod double_elim;
+pub mod elimination;
+pub mod new_elim;
 pub mod single_elim;
 pub mod single_elim_copy;
 

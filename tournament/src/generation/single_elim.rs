@@ -1147,7 +1147,95 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
         sets_graph[n].position = position;
     });
 
+    // ! COMPLETED STEP 1. (j)
+
     // let clean_graph = sets_graph.map(|_, n| (n.bracket, n.game), |_, e| e);
+    println!("{:?}", Dot::new(&sets_graph));
+    sets_graph
+}
+
+pub fn new_rr(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEdge> {
+    let players_count = players.len();
+    if players_count < 2 {
+        panic!(
+            "Tournament needs at least 2 players, found {}",
+            players_count
+        );
+    }
+    let rounds_count = if players_count % 2 == 0 {
+        players_count - 1
+    } else {
+        players_count
+    } as u64;
+    let round_sets_count = if players_count % 2 == 0 {
+        players_count / 2
+    } else {
+        (players_count - 1) / 2
+    } as u64;
+    let full_round_sets_count = round_sets_count + if players_count % 2 == 1 { 1 } else { 0 };
+
+    println!(
+        "{:?}: players_count\n{:?}: rounds_count\n{:?}: round_sets_count\n{:?}: full_round_sets_count",
+        players_count, rounds_count, round_sets_count, full_round_sets_count,
+    );
+
+    let mut sets_graph = StableGraph::<GraphSet, SetEdge>::new();
+
+    let mut game_number: u64 = 0;
+    let mut player_top: usize;
+    let mut player_bottom: usize;
+
+    for j in 1..=tuple {
+        for k in 1..=rounds_count {
+            for i in 1..=round_sets_count {
+                game_number += 1;
+                let set = i + if players_count % 2 == 1 { 1 } else { 0 };
+
+                let player_offsets = (
+                    (((set + (k - 1) * full_round_sets_count) - 1)
+                        % (full_round_sets_count * 2 - 1)) as usize,
+                    if set == 1 {
+                        full_round_sets_count * 2 - 1
+                    } else {
+                        ((full_round_sets_count * 2 - set
+                            + 1
+                            + (rounds_count - (k - 1)) * (full_round_sets_count - 1))
+                            - 1)
+                            % (full_round_sets_count * 2 - 1)
+                    } as usize,
+                );
+                if k % 2 == 0 && set == 1 {
+                    if j % 2 == 1 {
+                        player_top = player_offsets.1;
+                        player_bottom = player_offsets.0;
+                    } else {
+                        player_top = player_offsets.0;
+                        player_bottom = player_offsets.1;
+                    }
+                } else {
+                    if j % 2 == 1 {
+                        player_top = player_offsets.0;
+                        player_bottom = player_offsets.1;
+                    } else {
+                        player_top = player_offsets.1;
+                        player_bottom = player_offsets.0;
+                    }
+                }
+
+                sets_graph.add_node(GraphSet {
+                    bracket: j,
+                    game: game_number,
+                    round: k + rounds_count * (j - 1),
+                    position: i,
+                    placeholders: (
+                        players[player_top].to_owned(),
+                        players[player_bottom].to_owned(),
+                    ),
+                });
+            }
+        }
+    }
+
     println!("{:?}", Dot::new(&sets_graph));
     sets_graph
 }

@@ -1,0 +1,12 @@
+[book]
+authors = ["Peter Njeim"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Tournament Generation Documentation"
+
+[rust]
+edition = "2021"
+
+[output.html]
+mathjax-support = true

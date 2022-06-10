@@ -1,9 +1,0 @@
-{
-    "rust-analyzer.inlayHints.enable": false,
-    "cSpell.words": [
-        "concat",
-        "elim",
-        "semifilled",
-        "semifull"
-    ]
-}

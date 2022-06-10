@@ -75,8 +75,10 @@ h. Fix placeholders by following the edges and propogating game numbers for winn
 i. Calculate positioning of sets
   i.   Start at 1, then multiply by 2 for every winners edge until the last game in that bracket excluding finals. Every winners edge with position 1 will subtract 2^(starting round of edge - 1) from the final number.
   ii.  Generate new positioning system so that brackets are concise and aesthetically pleasing.
-j. ???
-k. Profit.
+j. Generate games to determine standings more accurately. These games have no game numbers and are out of bracket.
+k. For every two-round pair in the losers brackets, the positioning must make the top-most set (will be in the second round of the pair) the very top of the bracket (position 1), even counting for ghost games
+l. ???
+m. Profit.
 
 If the next round does not have a byes or loser in at least one position in every set, generate two losers bracket rounds, the first round with sets with one loser (from the current round, with potential custom ordering) in the top position, and one winner in the bottom position, and the second round with winners from the previous round in both positions
 If the next round has a bye or loser in every set, generate one losers bracket round, having one loser (from the current round, with potential custom ordering) in the top position, and one winner in the bottom position
@@ -87,3 +89,92 @@ Calculating position of sets in losers brackets:
 Last bracket games of bracket have same position (3rd bracket has last 3 games as position 1 both internally and visually (CSS))
 
 Set scan BEFORE deleting games but AFTER setings games to 0.
+
+1: 1,2,3,3,5,5,5,5,9,9,9,9,9,9,9,9,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17
+
+The following is the "winning early matters more method"
+There is also a "doesn't matter when you win, your final standings are all that matter" which requires n-tuple elimination tournaments for every group of standings (5,5,5,5, etc.) until there is a bracket with only loser rounds (no winner rounds).
+
+3,3 => 3,4
+---------------------------------------
+5,5
+    => 5,5 => 5,6
+5,5
+
+7,7 => 7,8
+--------------------------------------- (stop after 1 winner round)
+(make single elim from losers of each round recursively)
+9,9
+    => 9,9
+9,9
+          => 9,9 => 9,10
+9,9
+    => 9,9
+9,9
+
+11,11 => 11,12
+
+13,13
+      => 13,13 => 13,14
+13,13
+
+15,15 => 15,16
+--------------------------------------- (stop after 2 winner round)
+9,9
+    => 9,9
+9,9
+          => 9,9 => 9,10
+9,9
+    => 9,9
+9,9
+
+11,11 => 11,11
+              => 11,11 => 11,12
+11,11 => 11,11
+
+13,13
+      => 13,13 => 13,14
+13,13
+
+15,15 => 15,16
+---------------------------------------
+17,17
+      => 17,17
+17,17
+              => 17,17
+17,17
+      => 17,17
+17,17
+                      => 17,17 => 17,18
+17,17
+      => 17,17
+17,17
+              => 17,17
+17,17
+      => 17,17
+17,17
+
+19,19 => 19,20
+
+21,21
+      => 21,21 => 21,22
+21,21
+
+23,23 => 23,24
+
+25,25
+      => 25,25
+25,25
+              => 25,25 => 25,26
+25,25
+      => 25,25
+25,25
+
+27,27 => 27,28
+
+29,29
+      => 29,29 => 29,30
+29,29
+
+31,31 => 31,32
+---------------------------------------

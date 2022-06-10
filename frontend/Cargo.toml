@@ -1,11 +1,11 @@
 [package]
 name = "frontend"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Peter Njeim <peterthegreatpeterthegreat@hotmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 yew = "0.18"
-petgraph = "0.5"
-material-yew = { version = "0.1", features = ["full"] }
+petgraph = "0"
+material-yew = { version = "0", features = ["full"] }
 tournament = { path = "../tournament" }
