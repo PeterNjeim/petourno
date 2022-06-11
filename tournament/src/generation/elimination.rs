@@ -2,8 +2,6 @@ use super::*;
 use petgraph::dot::*;
 use petgraph::stable_graph::*;
 use petgraph::visit::EdgeRef;
-use petgraph::visit::IntoEdgesDirected;
-use petgraph::visit::NodeRef;
 use petgraph::EdgeDirection::Incoming;
 use petgraph::EdgeDirection::Outgoing;
 use std::collections::HashMap;
@@ -88,276 +86,143 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
         });
     }
 
-    // * COMPLETED STEP 1. (b)
-    for j in 2..=tuple {
-        for i in 1..=full_first_bracket_first_round_sets_count as u64 {
-            game_number += 1;
-            sets_graph.add_node(GraphSet {
-                bracket: j,
-                game: if i % 2 == 0 { game_number } else { 0 },
-                round: 1,
-                position: i,
-                placeholders: if i % 2 == 0 {
-                    (
-                        "L".to_owned()
-                            + &sets_graph[sets_graph
-                                .node_indices()
-                                .find(|&n| sets_graph[n].bracket == j - 1 && sets_graph[n].round == 1 && sets_graph[n].position == i - 1)
-                                .unwrap()]
-                            .game
-                            .to_string(),
-                        "L".to_owned()
-                            + &sets_graph[sets_graph
-                                .node_indices()
-                                .find(|&n| sets_graph[n].bracket == j - 1 && sets_graph[n].round == 1 && sets_graph[n].position == i)
-                                .unwrap()]
-                            .game
-                            .to_string(),
-                    )
-                } else {
-                    ("".to_owned(), "".to_owned())
-                },
-            });
-            if i % 2 == 0 {
-                sets_graph.add_edge(
-                    sets_graph
-                        .node_indices()
-                        .find(|&n| sets_graph[n].bracket == j - 1 && sets_graph[n].round == 1 && sets_graph[n].position == i - 1)
-                        .unwrap(),
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "loser".to_owned(),
-                        position: 1,
-                    },
-                );
-                sets_graph.add_edge(
-                    sets_graph
-                        .node_indices()
-                        .find(|&n| sets_graph[n].bracket == j - 1 && sets_graph[n].round == 1 && sets_graph[n].position == i)
-                        .unwrap(),
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "loser".to_owned(),
-                        position: 2,
-                    },
-                );
-            }
-        }
-    }
-
-    // * COMPLETED STEP 1. (c)
-    for k in 2..first_bracket_exponent {
-        // * COMPLETED STEP 1. (c) I.
-        for i in 1..=full_first_bracket_first_round_sets_count >> (k - 1) as u64 {
-            println!("bracket:{}, round:{}, position:{}", 1, k, i);
-            game_number += 1;
-            sets_graph.add_node(GraphSet {
-                bracket: 1,
-                game: game_number,
-                round: k,
-                position: i,
-                placeholders: (
-                    "W".to_owned()
-                        + &sets_graph[sets_graph
-                            .node_indices()
-                            .find(|&n| sets_graph[n].bracket == 1 && sets_graph[n].round == k - 1 && sets_graph[n].position == i * 2 - 1)
-                            .unwrap()]
-                        .game
-                        .to_string(),
-                    "W".to_owned()
-                        + &sets_graph[sets_graph
-                            .node_indices()
-                            .find(|&n| sets_graph[n].bracket == 1 && sets_graph[n].round == k - 1 && sets_graph[n].position == i * 2)
-                            .unwrap()]
-                        .game
-                        .to_string(),
-                ),
-            });
-            sets_graph.add_edge(
-                sets_graph
-                    .node_indices()
-                    .find(|&n| sets_graph[n].bracket == 1 && sets_graph[n].round == k - 1 && sets_graph[n].position == i * 2 - 1)
-                    .unwrap(),
-                NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                SetEdge {
-                    outcome: "winner".to_owned(),
-                    position: 1,
-                },
-            );
-            sets_graph.add_edge(
-                sets_graph
-                    .node_indices()
-                    .find(|&n| sets_graph[n].bracket == 1 && sets_graph[n].round == k - 1 && sets_graph[n].position == i * 2)
-                    .unwrap(),
-                NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                SetEdge {
-                    outcome: "winner".to_owned(),
-                    position: 2,
-                },
-            );
-        }
-        // * COMPLETED STEP 1. (c) II.
-        let mut round_number: u64;
-        let mut position_number: u64;
+    if players_count > 2 {
+        // * COMPLETED STEP 1. (b)
         for j in 2..=tuple {
-            round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].round + 1;
-            // * COMPLETED STEP 1. (g)
-            position_number = if j % 2 == 0 && (round_number - (k - 2)) % 4 == 2 || j % 2 == 1 && (round_number - (k - 2)) % 4 == 0 {
-                (full_first_bracket_first_round_sets_count >> (k - 1)) + 1
-            } else if (round_number - (k - 2)) % 4 == 3 {
-                (full_first_bracket_first_round_sets_count >> k) + 1
-            } else if j % 2 == 0 && (round_number - (k - 2)) % 4 == 0 || j % 2 == 1 && (round_number - (k - 2)) % 4 == 2 {
-                ((full_first_bracket_first_round_sets_count >> k) + 1) - 1
-            } else {
-                (1) - 1
-            };
+            for i in 1..=full_first_bracket_first_round_sets_count as u64 {
+                game_number += 1;
+                sets_graph.add_node(GraphSet {
+                    bracket: j,
+                    game: if i % 2 == 0 { game_number } else { 0 },
+                    round: 1,
+                    position: i,
+                    placeholders: if i % 2 == 0 {
+                        (
+                            "L".to_owned()
+                                + &sets_graph[sets_graph
+                                    .node_indices()
+                                    .find(|&n| sets_graph[n].bracket == j - 1 && sets_graph[n].round == 1 && sets_graph[n].position == i - 1)
+                                    .unwrap()]
+                                .game
+                                .to_string(),
+                            "L".to_owned()
+                                + &sets_graph[sets_graph
+                                    .node_indices()
+                                    .find(|&n| sets_graph[n].bracket == j - 1 && sets_graph[n].round == 1 && sets_graph[n].position == i)
+                                    .unwrap()]
+                                .game
+                                .to_string(),
+                        )
+                    } else {
+                        ("".to_owned(), "".to_owned())
+                    },
+                });
+                if i % 2 == 0 {
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .find(|&n| sets_graph[n].bracket == j - 1 && sets_graph[n].round == 1 && sets_graph[n].position == i - 1)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "loser".to_owned(),
+                            position: 1,
+                        },
+                    );
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .find(|&n| sets_graph[n].bracket == j - 1 && sets_graph[n].round == 1 && sets_graph[n].position == i)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "loser".to_owned(),
+                            position: 2,
+                        },
+                    );
+                }
+            }
+        }
+
+        // * COMPLETED STEP 1. (c)
+        for k in 2..first_bracket_exponent {
+            // * COMPLETED STEP 1. (c) I.
             for i in 1..=full_first_bracket_first_round_sets_count >> (k - 1) as u64 {
-                println!("bracket:{}, round:{}, position:{}", j, round_number, i);
+                println!("bracket:{}, round:{}, position:{}", 1, k, i);
                 game_number += 1;
+                sets_graph.add_node(GraphSet {
+                    bracket: 1,
+                    game: game_number,
+                    round: k,
+                    position: i,
+                    placeholders: (
+                        "W".to_owned()
+                            + &sets_graph[sets_graph
+                                .node_indices()
+                                .find(|&n| sets_graph[n].bracket == 1 && sets_graph[n].round == k - 1 && sets_graph[n].position == i * 2 - 1)
+                                .unwrap()]
+                            .game
+                            .to_string(),
+                        "W".to_owned()
+                            + &sets_graph[sets_graph
+                                .node_indices()
+                                .find(|&n| sets_graph[n].bracket == 1 && sets_graph[n].round == k - 1 && sets_graph[n].position == i * 2)
+                                .unwrap()]
+                            .game
+                            .to_string(),
+                    ),
+                });
+                sets_graph.add_edge(
+                    sets_graph
+                        .node_indices()
+                        .find(|&n| sets_graph[n].bracket == 1 && sets_graph[n].round == k - 1 && sets_graph[n].position == i * 2 - 1)
+                        .unwrap(),
+                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                    SetEdge {
+                        outcome: "winner".to_owned(),
+                        position: 1,
+                    },
+                );
+                sets_graph.add_edge(
+                    sets_graph
+                        .node_indices()
+                        .find(|&n| sets_graph[n].bracket == 1 && sets_graph[n].round == k - 1 && sets_graph[n].position == i * 2)
+                        .unwrap(),
+                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                    SetEdge {
+                        outcome: "winner".to_owned(),
+                        position: 2,
+                    },
+                );
+            }
+            // * COMPLETED STEP 1. (c) II.
+            let mut round_number: u64;
+            let mut position_number: u64;
+            for j in 2..=tuple {
+                round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].round + 1;
+                // * COMPLETED STEP 1. (g)
                 position_number = if j % 2 == 0 && (round_number - (k - 2)) % 4 == 2 || j % 2 == 1 && (round_number - (k - 2)) % 4 == 0 {
-                    position_number - 1
+                    (full_first_bracket_first_round_sets_count >> (k - 1)) + 1
                 } else if (round_number - (k - 2)) % 4 == 3 {
-                    if position_number == 1 {
-                        full_first_bracket_first_round_sets_count >> (k - 1)
-                    } else {
-                        position_number - 1
-                    }
-                } else if j % 2 == 0 && (round_number - (k - 2)) % 4 == 0 || j % 2 == 1 && (round_number - (k - 2)) % 4 == 2 {
-                    if position_number == full_first_bracket_first_round_sets_count >> (k - 1) {
-                        1
-                    } else {
-                        position_number + 1
-                    }
-                } else {
-                    position_number + 1
-                };
-                sets_graph.add_node(GraphSet {
-                    bracket: j,
-                    game: game_number,
-                    round: round_number,
-                    position: i,
-                    placeholders: (
-                        "L".to_owned()
-                            + &sets_graph[sets_graph
-                                .node_indices()
-                                .find(|&n| {
-                                    sets_graph[n].bracket == j - 1
-                                        && sets_graph[n].round == sets_graph[sets_graph.node_indices().rfind(|&g| sets_graph[g].bracket == j - 1).unwrap()].round + 2 - j
-                                        && sets_graph[n].position == position_number
-                                })
-                                .unwrap()]
-                            .game
-                            .to_string(),
-                        "W".to_owned()
-                            + &sets_graph[sets_graph
-                                .node_indices()
-                                .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * (if k == 2 { 1 } else { 0 } + 1))
-                                .unwrap()]
-                            .game
-                            .to_string(),
-                    ),
-                });
-                sets_graph.add_edge(
-                    sets_graph
-                        .node_indices()
-                        .find(|&n| {
-                            sets_graph[n].bracket == j - 1
-                                && sets_graph[n].round == sets_graph[sets_graph.node_indices().rfind(|&g| sets_graph[g].bracket == j - 1).unwrap()].round + 2 - j
-                                && sets_graph[n].position == position_number
-                        })
-                        .unwrap(),
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "loser".to_owned(),
-                        position: 1,
-                    },
-                );
-                sets_graph.add_edge(
-                    sets_graph
-                        .node_indices()
-                        .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * (if k == 2 { 1 } else { 0 } + 1))
-                        .unwrap(),
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "winner".to_owned(),
-                        position: 2,
-                    },
-                );
-            }
-            // * COMPLETED STEP 1. (c) II. (1)
-            round_number += 1;
-            for i in 1..=full_first_bracket_first_round_sets_count >> k as u64 {
-                println!("bracket:{}, round:{}, position:{}", j, round_number, i);
-                game_number += 1;
-                sets_graph.add_node(GraphSet {
-                    bracket: j,
-                    game: game_number,
-                    round: round_number,
-                    position: i,
-                    placeholders: (
-                        "W".to_owned()
-                            + &sets_graph[sets_graph
-                                .node_indices()
-                                .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * 2 - 1)
-                                .unwrap()]
-                            .game
-                            .to_string(),
-                        "W".to_owned()
-                            + &sets_graph[sets_graph
-                                .node_indices()
-                                .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * 2)
-                                .unwrap()]
-                            .game
-                            .to_string(),
-                    ),
-                });
-                sets_graph.add_edge(
-                    sets_graph
-                        .node_indices()
-                        .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * 2 - 1)
-                        .unwrap(),
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "winner".to_owned(),
-                        position: 1,
-                    },
-                );
-                sets_graph.add_edge(
-                    sets_graph
-                        .node_indices()
-                        .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * 2)
-                        .unwrap(),
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "winner".to_owned(),
-                        position: 2,
-                    },
-                );
-            }
-            for l in 2..j {
-                round_number += 1;
-                position_number = if j % 2 == 0 && (round_number - (k - 1)) % 4 == 2 || j % 2 == 1 && (round_number - (k - 1)) % 4 == 0 {
                     (full_first_bracket_first_round_sets_count >> k) + 1
-                } else if (round_number - (k - 1)) % 4 == 3 {
-                    (full_first_bracket_first_round_sets_count >> (k + 1)) + 1
-                } else if j % 2 == 0 && (round_number - (k - 1)) % 4 == 0 || j % 2 == 1 && (round_number - (k - 1)) % 4 == 2 {
-                    ((full_first_bracket_first_round_sets_count >> (k + 1)) + 1) - 1
+                } else if j % 2 == 0 && (round_number - (k - 2)) % 4 == 0 || j % 2 == 1 && (round_number - (k - 2)) % 4 == 2 {
+                    ((full_first_bracket_first_round_sets_count >> k) + 1) - 1
                 } else {
                     (1) - 1
                 };
-                for i in 1..=full_first_bracket_first_round_sets_count >> k as u64 {
-                    println!("bracket:{}, round:{}, position:{}, tuple_extra:{}", j, round_number, i, l - 1);
+                for i in 1..=full_first_bracket_first_round_sets_count >> (k - 1) as u64 {
+                    println!("bracket:{}, round:{}, position:{}", j, round_number, i);
                     game_number += 1;
-                    position_number = if j % 2 == 0 && (round_number - (k - 1)) % 4 == 2 || j % 2 == 1 && (round_number - (k - 1)) % 4 == 0 {
+                    position_number = if j % 2 == 0 && (round_number - (k - 2)) % 4 == 2 || j % 2 == 1 && (round_number - (k - 2)) % 4 == 0 {
                         position_number - 1
-                    } else if (round_number - (k - 1)) % 4 == 3 {
+                    } else if (round_number - (k - 2)) % 4 == 3 {
                         if position_number == 1 {
-                            full_first_bracket_first_round_sets_count >> k
+                            full_first_bracket_first_round_sets_count >> (k - 1)
                         } else {
                             position_number - 1
                         }
-                    } else if j % 2 == 0 && (round_number - (k - 1)) % 4 == 0 || j % 2 == 1 && (round_number - (k - 1)) % 4 == 2 {
-                        if position_number == full_first_bracket_first_round_sets_count >> k {
+                    } else if j % 2 == 0 && (round_number - (k - 2)) % 4 == 0 || j % 2 == 1 && (round_number - (k - 2)) % 4 == 2 {
+                        if position_number == full_first_bracket_first_round_sets_count >> (k - 1) {
                             1
                         } else {
                             position_number + 1
@@ -376,7 +241,7 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                                     .node_indices()
                                     .find(|&n| {
                                         sets_graph[n].bracket == j - 1
-                                            && sets_graph[n].round == &sets_graph[sets_graph.node_indices().rfind(|&g| sets_graph[g].bracket == j - 1).unwrap()].round + l - j + 1
+                                            && sets_graph[n].round == sets_graph[sets_graph.node_indices().rfind(|&g| sets_graph[g].bracket == j - 1).unwrap()].round + 2 - j
                                             && sets_graph[n].position == position_number
                                     })
                                     .unwrap()]
@@ -385,7 +250,7 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                             "W".to_owned()
                                 + &sets_graph[sets_graph
                                     .node_indices()
-                                    .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i)
+                                    .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * (if k == 2 { 1 } else { 0 } + 1))
                                     .unwrap()]
                                 .game
                                 .to_string(),
@@ -396,7 +261,7 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                             .node_indices()
                             .find(|&n| {
                                 sets_graph[n].bracket == j - 1
-                                    && sets_graph[n].round == &sets_graph[sets_graph.node_indices().rfind(|&g| sets_graph[g].bracket == j - 1).unwrap()].round + l - j + 1
+                                    && sets_graph[n].round == sets_graph[sets_graph.node_indices().rfind(|&g| sets_graph[g].bracket == j - 1).unwrap()].round + 2 - j
                                     && sets_graph[n].position == position_number
                             })
                             .unwrap(),
@@ -409,7 +274,7 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                     sets_graph.add_edge(
                         sets_graph
                             .node_indices()
-                            .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i)
+                            .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * (if k == 2 { 1 } else { 0 } + 1))
                             .unwrap(),
                         NodeIndex::from(sets_graph.node_count() as u32 - 1),
                         SetEdge {
@@ -418,6 +283,141 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                         },
                     );
                 }
+                // * COMPLETED STEP 1. (c) II. (1)
+                round_number += 1;
+                for i in 1..=full_first_bracket_first_round_sets_count >> k as u64 {
+                    println!("bracket:{}, round:{}, position:{}", j, round_number, i);
+                    game_number += 1;
+                    sets_graph.add_node(GraphSet {
+                        bracket: j,
+                        game: game_number,
+                        round: round_number,
+                        position: i,
+                        placeholders: (
+                            "W".to_owned()
+                                + &sets_graph[sets_graph
+                                    .node_indices()
+                                    .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * 2 - 1)
+                                    .unwrap()]
+                                .game
+                                .to_string(),
+                            "W".to_owned()
+                                + &sets_graph[sets_graph
+                                    .node_indices()
+                                    .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * 2)
+                                    .unwrap()]
+                                .game
+                                .to_string(),
+                        ),
+                    });
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * 2 - 1)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "winner".to_owned(),
+                            position: 1,
+                        },
+                    );
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i * 2)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "winner".to_owned(),
+                            position: 2,
+                        },
+                    );
+                }
+                for l in 2..j {
+                    round_number += 1;
+                    position_number = if j % 2 == 0 && (round_number - (k - 1)) % 4 == 2 || j % 2 == 1 && (round_number - (k - 1)) % 4 == 0 {
+                        (full_first_bracket_first_round_sets_count >> k) + 1
+                    } else if (round_number - (k - 1)) % 4 == 3 {
+                        (full_first_bracket_first_round_sets_count >> (k + 1)) + 1
+                    } else if j % 2 == 0 && (round_number - (k - 1)) % 4 == 0 || j % 2 == 1 && (round_number - (k - 1)) % 4 == 2 {
+                        ((full_first_bracket_first_round_sets_count >> (k + 1)) + 1) - 1
+                    } else {
+                        (1) - 1
+                    };
+                    for i in 1..=full_first_bracket_first_round_sets_count >> k as u64 {
+                        println!("bracket:{}, round:{}, position:{}, tuple_extra:{}", j, round_number, i, l - 1);
+                        game_number += 1;
+                        position_number = if j % 2 == 0 && (round_number - (k - 1)) % 4 == 2 || j % 2 == 1 && (round_number - (k - 1)) % 4 == 0 {
+                            position_number - 1
+                        } else if (round_number - (k - 1)) % 4 == 3 {
+                            if position_number == 1 {
+                                full_first_bracket_first_round_sets_count >> k
+                            } else {
+                                position_number - 1
+                            }
+                        } else if j % 2 == 0 && (round_number - (k - 1)) % 4 == 0 || j % 2 == 1 && (round_number - (k - 1)) % 4 == 2 {
+                            if position_number == full_first_bracket_first_round_sets_count >> k {
+                                1
+                            } else {
+                                position_number + 1
+                            }
+                        } else {
+                            position_number + 1
+                        };
+                        sets_graph.add_node(GraphSet {
+                            bracket: j,
+                            game: game_number,
+                            round: round_number,
+                            position: i,
+                            placeholders: (
+                                "L".to_owned()
+                                    + &sets_graph[sets_graph
+                                        .node_indices()
+                                        .find(|&n| {
+                                            sets_graph[n].bracket == j - 1
+                                                && sets_graph[n].round == &sets_graph[sets_graph.node_indices().rfind(|&g| sets_graph[g].bracket == j - 1).unwrap()].round + l - j + 1
+                                                && sets_graph[n].position == position_number
+                                        })
+                                        .unwrap()]
+                                    .game
+                                    .to_string(),
+                                "W".to_owned()
+                                    + &sets_graph[sets_graph
+                                        .node_indices()
+                                        .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i)
+                                        .unwrap()]
+                                    .game
+                                    .to_string(),
+                            ),
+                        });
+                        sets_graph.add_edge(
+                            sets_graph
+                                .node_indices()
+                                .find(|&n| {
+                                    sets_graph[n].bracket == j - 1
+                                        && sets_graph[n].round == &sets_graph[sets_graph.node_indices().rfind(|&g| sets_graph[g].bracket == j - 1).unwrap()].round + l - j + 1
+                                        && sets_graph[n].position == position_number
+                                })
+                                .unwrap(),
+                            NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                            SetEdge {
+                                outcome: "loser".to_owned(),
+                                position: 1,
+                            },
+                        );
+                        sets_graph.add_edge(
+                            sets_graph
+                                .node_indices()
+                                .find(|&n| sets_graph[n].bracket == j && sets_graph[n].round == round_number - 1 && sets_graph[n].position == i)
+                                .unwrap(),
+                            NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                            SetEdge {
+                                outcome: "winner".to_owned(),
+                                position: 2,
+                            },
+                        );
+                    }
+                }
             }
         }
     }
@@ -425,14 +425,17 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
     // * COMPLETED STEP 1. (d)
     for k in 1..=tuple {
         // * COMPLETED STEP 1. (d) I.
-        println!(
-            "bracket:{}, round:{}, position:{}",
-            k,
-            sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].round + 1,
-            1
-        );
+        if players_count > 2 {
+            println!(
+                "bracket:{}, round:{}, position:{}",
+                k,
+                sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].round + 1,
+                1
+            );
+        }
         let mut if_nec_indices: Vec<NodeIndex> = Vec::new();
         let mut if_nec_games: String = "".to_owned();
+
         if k != 1 {
             if_nec_indices = sets_graph
                 .node_indices()
@@ -449,102 +452,36 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
             if_nec_games.truncate(if_nec_games.len() - 1);
         }
         game_number += 1;
-        sets_graph.add_node(GraphSet {
-            bracket: k,
-            game: game_number,
-            round: sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].round + 1,
-            position: 1,
-            placeholders: if k == 1 {
-                (
-                    "W".to_owned()
-                        + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k && sets_graph[n].position == 1).unwrap()]
-                            .game
-                            .to_string(),
-                    "W".to_owned()
-                        + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k && sets_graph[n].position == 2).unwrap()]
-                            .game
-                            .to_string(),
-                )
-            } else {
-                (
-                    if_nec_games,
-                    "W".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].game.to_string(),
-                )
-            },
-        });
-        if k == 1 {
-            sets_graph.add_edge(
-                sets_graph
-                    .node_indices()
-                    .rev()
-                    .filter(|&n| sets_graph[n].bracket == k && sets_graph[n].position == 1)
-                    .enumerate()
-                    .find(|&(index, _)| index == 1)
-                    .map(|(_, n)| n)
-                    .unwrap(),
-                NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                SetEdge {
-                    outcome: "winner".to_owned(),
-                    position: 1,
-                },
-            );
-            sets_graph.add_edge(
-                sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k && sets_graph[n].position == 2).unwrap(),
-                NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                SetEdge {
-                    outcome: "winner".to_owned(),
-                    position: 2,
-                },
-            );
-        } else {
-            if_nec_indices.iter().for_each(|&index| {
-                sets_graph.add_edge(
-                    index,
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "winner".to_owned(),
-                        position: 1,
-                    },
-                );
-            });
-            sets_graph.add_edge(
-                sets_graph
-                    .node_indices()
-                    .rev()
-                    .filter(|&n| sets_graph[n].bracket == k)
-                    .enumerate()
-                    .find(|&(index, _)| index == 1)
-                    .map(|(_, n)| n)
-                    .unwrap(),
-                NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                SetEdge {
-                    outcome: "winner".to_owned(),
-                    position: 2,
-                },
-            );
-        }
-        let mut round_number: u64;
-        for j in 2..=tuple {
-            // * COMPLETED STEP 1. (d) III.
-            if j <= k {
-                round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].round + 1;
-                println!("bracket:{}, round:{}, position:{}", k, round_number, 1);
-                game_number += 1;
-                sets_graph.add_node(GraphSet {
-                    bracket: k,
-                    game: game_number,
-                    round: round_number,
-                    position: 1,
-                    placeholders: (
+        if players_count > 2 {
+            sets_graph.add_node(GraphSet {
+                bracket: k,
+                game: game_number,
+                round: sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].round + 1,
+                position: 1,
+                placeholders: if k == 1 {
+                    (
+                        "W".to_owned()
+                            + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k && sets_graph[n].position == 1).unwrap()]
+                                .game
+                                .to_string(),
+                        "W".to_owned()
+                            + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k && sets_graph[n].position == 2).unwrap()]
+                                .game
+                                .to_string(),
+                    )
+                } else {
+                    (
+                        if_nec_games,
                         "W".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].game.to_string(),
-                        "L".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].game.to_string(),
-                    ),
-                });
+                    )
+                },
+            });
+            if k == 1 {
                 sets_graph.add_edge(
                     sets_graph
                         .node_indices()
                         .rev()
-                        .filter(|&n| sets_graph[n].bracket == k)
+                        .filter(|&n| sets_graph[n].bracket == k && sets_graph[n].position == 1)
                         .enumerate()
                         .find(|&(index, _)| index == 1)
                         .map(|(_, n)| n)
@@ -556,55 +493,20 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                     },
                 );
                 sets_graph.add_edge(
-                    sets_graph
-                        .node_indices()
-                        .rev()
-                        .filter(|&n| sets_graph[n].bracket == k)
-                        .enumerate()
-                        .find(|&(index, _)| index == 1)
-                        .map(|(_, n)| n)
-                        .unwrap(),
+                    sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k && sets_graph[n].position == 2).unwrap(),
                     NodeIndex::from(sets_graph.node_count() as u32 - 1),
                     SetEdge {
-                        outcome: "loser".to_owned(),
+                        outcome: "winner".to_owned(),
                         position: 2,
                     },
                 );
-            }
-            // * COMPLETED STEP 1. (d) IV.
-            else if j == k + 1 {
-                round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].round + 1;
-                println!("bracket:{}, round:{}, position:{}", j, round_number, 1);
-                if_nec_indices = sets_graph
-                    .node_indices()
-                    .rev()
-                    .filter(|&n| sets_graph[n].bracket == j - 1)
-                    .enumerate()
-                    .filter(|&(index, _)| index < j as usize - 1)
-                    .map(|(_, b)| b)
-                    .collect::<Vec<NodeIndex>>()
-                    .into_iter()
-                    .rev()
-                    .collect::<Vec<NodeIndex>>();
-                if_nec_games = if_nec_indices.iter().fold("".to_owned(), |acc, &index| acc + "L" + &sets_graph[index].game.to_string() + "/");
-                if_nec_games.truncate(if_nec_games.len() - 1);
-                game_number += 1;
-                sets_graph.add_node(GraphSet {
-                    bracket: j,
-                    game: game_number,
-                    round: round_number,
-                    position: 1,
-                    placeholders: (
-                        if_nec_games,
-                        "W".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].game.to_string(),
-                    ),
-                });
+            } else {
                 if_nec_indices.iter().for_each(|&index| {
                     sets_graph.add_edge(
                         index,
                         NodeIndex::from(sets_graph.node_count() as u32 - 1),
                         SetEdge {
-                            outcome: "loser".to_owned(),
+                            outcome: "winner".to_owned(),
                             position: 1,
                         },
                     );
@@ -613,7 +515,7 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                     sets_graph
                         .node_indices()
                         .rev()
-                        .filter(|&n| sets_graph[n].bracket == j)
+                        .filter(|&n| sets_graph[n].bracket == k)
                         .enumerate()
                         .find(|&(index, _)| index == 1)
                         .map(|(_, n)| n)
@@ -625,44 +527,242 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                     },
                 );
             }
-            // * COMPLETED STEP 1. (d) II.
-            else {
-                round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].round + 1;
-                println!("bracket:{}, round:{}, position:{}", j, round_number, 1);
-                game_number += 1;
+        } else {
+            if k == 1 {
+                game_number -= 1;
+            } else {
+                let if_nec_indices_losers = sets_graph
+                    .node_indices()
+                    .rev()
+                    .filter(|&n| sets_graph[n].bracket == k - 1)
+                    .enumerate()
+                    .filter(|&(index, _)| index < k as usize - 1)
+                    .map(|(_, b)| b)
+                    .collect::<Vec<NodeIndex>>()
+                    .into_iter()
+                    .rev()
+                    .collect::<Vec<NodeIndex>>();
+                let mut if_nec_games_losers = if_nec_indices_losers.iter().fold("".to_owned(), |acc, &index| acc + "L" + &sets_graph[index].game.to_string() + "/");
+                if_nec_games_losers.truncate(if_nec_games_losers.len() - 1);
+
                 sets_graph.add_node(GraphSet {
-                    bracket: j,
+                    bracket: k,
                     game: game_number,
-                    round: round_number,
+                    round: 1,
                     position: 1,
-                    placeholders: (
-                        "L".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j - 1).unwrap()].game.to_string(),
-                        "W".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].game.to_string(),
-                    ),
+                    placeholders: (if_nec_games, if_nec_games_losers),
                 });
-                sets_graph.add_edge(
-                    sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j - 1).unwrap(),
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "loser".to_owned(),
+                if_nec_indices.iter().for_each(|&index| {
+                    sets_graph.add_edge(
+                        index,
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "winner".to_owned(),
+                            position: 1,
+                        },
+                    );
+                });
+                if_nec_indices_losers.iter().for_each(|&index| {
+                    sets_graph.add_edge(
+                        index,
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "loser".to_owned(),
+                            position: 2,
+                        },
+                    );
+                });
+            }
+        }
+        let mut round_number: u64;
+        for j in 2..=tuple {
+            if players_count > 2 {
+                // * COMPLETED STEP 1. (d) III.
+                if j <= k {
+                    round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].round + 1;
+                    println!("bracket:{}, round:{}, position:{}", k, round_number, 1);
+                    game_number += 1;
+                    sets_graph.add_node(GraphSet {
+                        bracket: k,
+                        game: game_number,
+                        round: round_number,
                         position: 1,
-                    },
-                );
-                sets_graph.add_edge(
-                    sets_graph
+                        placeholders: (
+                            "W".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].game.to_string(),
+                            "L".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].game.to_string(),
+                        ),
+                    });
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .rev()
+                            .filter(|&n| sets_graph[n].bracket == k)
+                            .enumerate()
+                            .find(|&(index, _)| index == 1)
+                            .map(|(_, n)| n)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "winner".to_owned(),
+                            position: 1,
+                        },
+                    );
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .rev()
+                            .filter(|&n| sets_graph[n].bracket == k)
+                            .enumerate()
+                            .find(|&(index, _)| index == 1)
+                            .map(|(_, n)| n)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "loser".to_owned(),
+                            position: 2,
+                        },
+                    );
+                }
+                // * COMPLETED STEP 1. (d) IV.
+                else if j == k + 1 {
+                    round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].round + 1;
+                    println!("bracket:{}, round:{}, position:{}", j, round_number, 1);
+                    if_nec_indices = sets_graph
                         .node_indices()
                         .rev()
-                        .filter(|&n| sets_graph[n].bracket == j)
+                        .filter(|&n| sets_graph[n].bracket == j - 1)
                         .enumerate()
-                        .find(|&(index, _)| index == 1)
-                        .map(|(_, n)| n)
-                        .unwrap(),
-                    NodeIndex::from(sets_graph.node_count() as u32 - 1),
-                    SetEdge {
-                        outcome: "winner".to_owned(),
-                        position: 2,
-                    },
-                );
+                        .filter(|&(index, _)| index < j as usize - 1)
+                        .map(|(_, b)| b)
+                        .collect::<Vec<NodeIndex>>()
+                        .into_iter()
+                        .rev()
+                        .collect::<Vec<NodeIndex>>();
+                    if_nec_games = if_nec_indices.iter().fold("".to_owned(), |acc, &index| acc + "L" + &sets_graph[index].game.to_string() + "/");
+                    if_nec_games.truncate(if_nec_games.len() - 1);
+                    game_number += 1;
+                    sets_graph.add_node(GraphSet {
+                        bracket: j,
+                        game: game_number,
+                        round: round_number,
+                        position: 1,
+                        placeholders: (
+                            if_nec_games,
+                            "W".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].game.to_string(),
+                        ),
+                    });
+                    if_nec_indices.iter().for_each(|&index| {
+                        sets_graph.add_edge(
+                            index,
+                            NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                            SetEdge {
+                                outcome: "loser".to_owned(),
+                                position: 1,
+                            },
+                        );
+                    });
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .rev()
+                            .filter(|&n| sets_graph[n].bracket == j)
+                            .enumerate()
+                            .find(|&(index, _)| index == 1)
+                            .map(|(_, n)| n)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "winner".to_owned(),
+                            position: 2,
+                        },
+                    );
+                }
+                // * COMPLETED STEP 1. (d) II.
+                else {
+                    round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].round + 1;
+                    println!("bracket:{}, round:{}, position:{}", j, round_number, 1);
+                    game_number += 1;
+                    sets_graph.add_node(GraphSet {
+                        bracket: j,
+                        game: game_number,
+                        round: round_number,
+                        position: 1,
+                        placeholders: (
+                            "L".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j - 1).unwrap()].game.to_string(),
+                            "W".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j).unwrap()].game.to_string(),
+                        ),
+                    });
+                    sets_graph.add_edge(
+                        sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == j - 1).unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "loser".to_owned(),
+                            position: 1,
+                        },
+                    );
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .rev()
+                            .filter(|&n| sets_graph[n].bracket == j)
+                            .enumerate()
+                            .find(|&(index, _)| index == 1)
+                            .map(|(_, n)| n)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "winner".to_owned(),
+                            position: 2,
+                        },
+                    );
+                }
+            } else {
+                // * COMPLETED STEP 1. (d) III.
+                if j <= k {
+                    round_number = sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].round + 1;
+                    println!("bracket:{}, round:{}, position:{}", k, round_number, 1);
+                    game_number += 1;
+                    sets_graph.add_node(GraphSet {
+                        bracket: k,
+                        game: game_number,
+                        round: round_number,
+                        position: 1,
+                        placeholders: (
+                            "W".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].game.to_string(),
+                            "L".to_owned() + &sets_graph[sets_graph.node_indices().rfind(|&n| sets_graph[n].bracket == k).unwrap()].game.to_string(),
+                        ),
+                    });
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .rev()
+                            .filter(|&n| sets_graph[n].bracket == k)
+                            .enumerate()
+                            .find(|&(index, _)| index == 1)
+                            .map(|(_, n)| n)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "winner".to_owned(),
+                            position: 1,
+                        },
+                    );
+                    sets_graph.add_edge(
+                        sets_graph
+                            .node_indices()
+                            .rev()
+                            .filter(|&n| sets_graph[n].bracket == k)
+                            .enumerate()
+                            .find(|&(index, _)| index == 1)
+                            .map(|(_, n)| n)
+                            .unwrap(),
+                        NodeIndex::from(sets_graph.node_count() as u32 - 1),
+                        SetEdge {
+                            outcome: "loser".to_owned(),
+                            position: 2,
+                        },
+                    );
+                }
             }
         }
     }
@@ -942,150 +1042,158 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                     // if i == 1 {
                     //     println!("{}: {}", j, sets_graph[n].position);
                     // }
-
-                    sets_graph[n].position = if (i == 1 || i == 2)
-                        && sets_graph
-                            .node_indices()
-                            .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 1)
-                            .collect::<Vec<NodeIndex>>()
-                            .len()
-                            <= sets_graph
+                    sets_graph[n].position = if players_count > 2 {
+                        if (i == 1 || i == 2)
+                            && sets_graph
                                 .node_indices()
-                                .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 2)
+                                .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 1)
                                 .collect::<Vec<NodeIndex>>()
                                 .len()
-                        && (j == 1
-                            || (if sets_graph[sets_graph
-                                .node_indices()
-                                .find(|&l| sets_graph[l].bracket == j && sets_graph.edges_directed(l, Incoming).all(|f| f.weight().outcome == "winner"))
-                                .unwrap()]
-                            .round
-                                < (players_count as u64 - 1)
-                                && sets_graph[sets_graph
+                                <= sets_graph
+                                    .node_indices()
+                                    .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 2)
+                                    .collect::<Vec<NodeIndex>>()
+                                    .len()
+                            && (j == 1
+                                || (if sets_graph[sets_graph
                                     .node_indices()
                                     .find(|&l| sets_graph[l].bracket == j && sets_graph.edges_directed(l, Incoming).all(|f| f.weight().outcome == "winner"))
                                     .unwrap()]
                                 .round
-                                    <= (j + 2)
-                            {
-                                sets_graph[sets_graph
-                                    .node_indices()
-                                    .find(|&l| sets_graph[l].bracket == j && sets_graph.edges_directed(l, Incoming).all(|f| f.weight().outcome == "winner"))
-                                    .unwrap()]
-                                .round
-                                    - 2
-                            } else {
-                                sets_graph[sets_graph
-                                    .node_indices()
-                                    .find(|&l| sets_graph[l].bracket == j && sets_graph.edges_directed(l, Incoming).all(|f| f.weight().outcome == "winner"))
-                                    .unwrap()]
-                                .round
-                            } % j
-                                == 0))
-                    {
-                        if i == 2 {
-                            sets_graph[n].position * 2
-                        } else {
-                            sets_graph[n].position
-                        }
-                    } else if (i == 2 || i == 1)
-                        && sets_graph
-                            .node_indices()
-                            .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 1)
-                            .collect::<Vec<NodeIndex>>()
-                            .len()
-                            < sets_graph
-                                .node_indices()
-                                .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 2)
-                                .collect::<Vec<NodeIndex>>()
-                                .len()
-                    {
-                        if i == 2 {
-                            sets_graph[n].position * 2 - 1
-                        } else {
-                            sets_graph[n].position
-                        }
-                    } else if i == 1 && j != 2 {
-                        sets_graph[n].position * 2
-                    } else if i == 1 && j == 2 {
-                        if sets_graph
-                            .node_indices()
-                            .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 1)
-                            .collect::<Vec<NodeIndex>>()
-                            .len()
-                            <= sets_graph
-                                .node_indices()
-                                .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 2)
-                                .collect::<Vec<NodeIndex>>()
-                                .len()
+                                    < (players_count as u64 - 1)
+                                    && sets_graph[sets_graph
+                                        .node_indices()
+                                        .find(|&l| sets_graph[l].bracket == j && sets_graph.edges_directed(l, Incoming).all(|f| f.weight().outcome == "winner"))
+                                        .unwrap()]
+                                    .round
+                                        <= (j + 2)
+                                {
+                                    sets_graph[sets_graph
+                                        .node_indices()
+                                        .find(|&l| sets_graph[l].bracket == j && sets_graph.edges_directed(l, Incoming).all(|f| f.weight().outcome == "winner"))
+                                        .unwrap()]
+                                    .round
+                                        - 2
+                                } else {
+                                    sets_graph[sets_graph
+                                        .node_indices()
+                                        .find(|&l| sets_graph[l].bracket == j && sets_graph.edges_directed(l, Incoming).all(|f| f.weight().outcome == "winner"))
+                                        .unwrap()]
+                                    .round
+                                } % j
+                                    == 0))
                         {
-                            sets_graph[n].position
-                        } else {
+                            if i == 2 {
+                                sets_graph[n].position * 2
+                            } else {
+                                sets_graph[n].position
+                            }
+                        } else if (i == 2 || i == 1)
+                            && sets_graph
+                                .node_indices()
+                                .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 1)
+                                .collect::<Vec<NodeIndex>>()
+                                .len()
+                                < sets_graph
+                                    .node_indices()
+                                    .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 2)
+                                    .collect::<Vec<NodeIndex>>()
+                                    .len()
+                        {
+                            if i == 2 {
+                                sets_graph[n].position * 2 - 1
+                            } else {
+                                sets_graph[n].position
+                            }
+                        } else if i == 1 && j != 2 {
                             sets_graph[n].position * 2
-                        }
-                    } else if sets_graph.edges_directed(n, Incoming).all(|f| f.weight().outcome == "winner") && sets_graph.edges_directed(n, Incoming).any(|f| sets_graph[f.source()].bracket != j) {
-                        if sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().weight().position == 1 {
-                            sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().source()].position + 1
-                        } else {
-                            if sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().source()].position > 1 {
-                                sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().source()].position - 1
-                            } else {
-                                sets_graph
+                        } else if i == 1 && j == 2 {
+                            if sets_graph
+                                .node_indices()
+                                .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 1)
+                                .collect::<Vec<NodeIndex>>()
+                                .len()
+                                <= sets_graph
                                     .node_indices()
-                                    .filter(|&l| sets_graph[l].bracket == j)
+                                    .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 2)
                                     .collect::<Vec<NodeIndex>>()
-                                    .iter()
-                                    .for_each(|&f| sets_graph[f].position += 1);
-                                sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().source()].position - 1
-                            }
-                        }
-                    } else if sets_graph
-                        .edges_directed(n, Incoming)
-                        .filter(|f| f.weight().outcome == "winner")
-                        .collect::<Vec<EdgeReference<SetEdge>>>()
-                        .len()
-                        == 1
-                    {
-                        if sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().weight().position == 1 {
-                            sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position
-                        } else {
-                            if sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position > 1 {
-                                sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position - 1
+                                    .len()
+                            {
+                                sets_graph[n].position
                             } else {
-                                sets_graph
-                                    .node_indices()
-                                    .filter(|&l| sets_graph[l].bracket == j)
-                                    .collect::<Vec<NodeIndex>>()
-                                    .iter()
-                                    .for_each(|&f| sets_graph[f].position += 1);
-                                sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position - 1
+                                sets_graph[n].position * 2
                             }
+                        } else if sets_graph.edges_directed(n, Incoming).all(|f| f.weight().outcome == "winner")
+                            && sets_graph.edges_directed(n, Incoming).any(|f| sets_graph[f.source()].bracket != j)
+                        {
+                            if sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().weight().position == 1 {
+                                sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().source()].position + 1
+                            } else {
+                                if sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().source()].position > 1 {
+                                    sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().source()].position - 1
+                                } else {
+                                    sets_graph
+                                        .node_indices()
+                                        .filter(|&l| sets_graph[l].bracket == j)
+                                        .collect::<Vec<NodeIndex>>()
+                                        .iter()
+                                        .for_each(|&f| sets_graph[f].position += 1);
+                                    sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| sets_graph[f.source()].bracket == j).unwrap().source()].position - 1
+                                }
+                            }
+                        } else if sets_graph
+                            .edges_directed(n, Incoming)
+                            .filter(|f| f.weight().outcome == "winner")
+                            .collect::<Vec<EdgeReference<SetEdge>>>()
+                            .len()
+                            == 1
+                        {
+                            if sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().weight().position == 1 {
+                                sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position
+                            } else {
+                                if sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position > 1 {
+                                    sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position - 1
+                                } else {
+                                    sets_graph
+                                        .node_indices()
+                                        .filter(|&l| sets_graph[l].bracket == j)
+                                        .collect::<Vec<NodeIndex>>()
+                                        .iter()
+                                        .for_each(|&f| sets_graph[f].position += 1);
+                                    sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position - 1
+                                }
+                            }
+                        // } else if j >= 2 && i % 2 == 0 {
+                        //     sets_graph[sets_graph
+                        //         .edges_directed(n, Incoming)
+                        //         .find(|f| f.weight().outcome == "winner")
+                        //         .unwrap()
+                        //         .source()]
+                        //     .position
+                        //         - 1
+                        } else {
+                            (sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().position == 1).unwrap().source()].position
+                                + sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().position == 2).unwrap().source()].position)
+                                / 2
                         }
-                    // } else if j >= 2 && i % 2 == 0 {
-                    //     sets_graph[sets_graph
-                    //         .edges_directed(n, Incoming)
-                    //         .find(|f| f.weight().outcome == "winner")
-                    //         .unwrap()
-                    //         .source()]
-                    //     .position
-                    //         - 1
                     } else {
-                        (sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().position == 1).unwrap().source()].position
-                            + sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().position == 2).unwrap().source()].position)
-                            / 2
+                        // sets_graph[sets_graph.edges_directed(n, Incoming).find(|f| f.weight().outcome == "winner").unwrap().source()].position
+                        sets_graph[n].position
                     }
                 });
         }
-        sets_graph
-            .node_indices()
-            .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 1)
-            .collect::<Vec<NodeIndex>>()
-            .iter()
-            .for_each(|&n| {
-                sets_graph[n].position = sets_graph[sets_graph.edges_directed(n, Outgoing).find(|f| f.weight().outcome == "winner").unwrap().target()].position
-                    + sets_graph.edges_directed(n, Outgoing).find(|f| f.weight().outcome == "winner").unwrap().weight().position * 2
-                    - 3
-            });
+        if players_count > 2 {
+            sets_graph
+                .node_indices()
+                .filter(|&l| sets_graph[l].bracket == j && sets_graph[l].round == 1)
+                .collect::<Vec<NodeIndex>>()
+                .iter()
+                .for_each(|&n| {
+                    sets_graph[n].position = sets_graph[sets_graph.edges_directed(n, Outgoing).find(|f| f.weight().outcome == "winner").unwrap().target()].position
+                        + sets_graph.edges_directed(n, Outgoing).find(|f| f.weight().outcome == "winner").unwrap().weight().position * 2
+                        - 3
+                });
+        }
     }
 
     // // ! COMPLETED STEP 1. (i)
