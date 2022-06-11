@@ -1194,6 +1194,13 @@ pub fn new_elim(players: Vec<String>, tuple: u64) -> StableGraph<GraphSet, SetEd
                         - 3
                 });
         }
+        let min_position = sets_graph.node_indices().filter(|&l| sets_graph[l].bracket == j).map(|f| sets_graph[f].position).min().unwrap() - 1 as u64;
+        sets_graph
+            .node_indices()
+            .filter(|&l| sets_graph[l].bracket == j)
+            .collect::<Vec<NodeIndex>>()
+            .iter()
+            .for_each(|&n| sets_graph[n].position -= min_position);
     }
 
     // // ! COMPLETED STEP 1. (i)
