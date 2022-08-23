@@ -1,5 +1,5 @@
 # petourno
-World's first n-tuple (triple elimination and up) tournament generator. PWA designed for modularity.
+World's first n-tuple elimination (triple elimination and up) tournament generator. PWA designed for modularity.
 
 ## Configuration
 
